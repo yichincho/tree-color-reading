@@ -41,7 +41,7 @@
   }
 
   function buildImageParts(image) {
-    if (!image) return [];
+    if (!image || !image.dataUrl) return null;
     const parsed = parseDataUrl(image.dataUrl, image.mimeType);
     return { ...parsed, dataUrl: image.dataUrl };
   }
