@@ -27,6 +27,10 @@ three-color-reading/
 └─ android/                                # WebView Android 測試包
 ```
 
+## 本機網頁版
+
+`ThreeColorReading/` 是可以在電腦瀏覽器使用的版本：執行 `python app.py`，貼上 API Key，文章會一段一段分析。只需要 Python，不用安裝套件。說明請看 [ThreeColorReading/README.md](ThreeColorReading/README.md)。
+
 ## 開啟 Prototype
 
 因為 HTML 需要載入同資料夾的 `api-client.js`，建議在專案資料夾啟動本地靜態伺服器：
