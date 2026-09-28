@@ -45,6 +45,20 @@ test('builds Gemini generateContent request with inline image and header-only ke
   assert.equal(body.generationConfig.temperature, undefined);
 });
 
+test('omits the image part for text-only Gemini requests', () => {
+  for (const image of [undefined, null, { dataUrl: '' }]) {
+    const request = buildProviderRequest({
+      provider: 'gemini',
+      apiKey: 'gemini-secret',
+      text: 'Analyze this sentence.',
+      image,
+    });
+
+    const body = JSON.parse(request.body);
+    assert.deepEqual(body.contents[0].parts, [{ text: 'Analyze this sentence.' }]);
+  }
+});
+
 test('builds DeepSeek Chat Completions request with mixed text and image content', () => {
   const request = buildProviderRequest({
     provider: 'deepseek',
