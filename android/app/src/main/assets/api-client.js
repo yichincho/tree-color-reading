@@ -75,7 +75,6 @@
           contents: [{ role: 'user', parts }],
           generationConfig: {
             responseMimeType: 'application/json',
-            temperature: 0.2,
           },
         }),
       };

@@ -39,12 +39,12 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug
 
       - name: Rename APK for manual testing
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk three-color-reading-v0.2.1-debug.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk three-color-reading-v0.2.2-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: three-color-reading-v0.2.1-debug-apk
-          path: three-color-reading-v0.2.1-debug.apk
+          name: three-color-reading-v0.2.2-debug-apk
+          path: three-color-reading-v0.2.2-debug.apk
           if-no-files-found: error
           retention-days: 30

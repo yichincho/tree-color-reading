@@ -1,4 +1,4 @@
-# 三色閱讀 API 設定 v0.2.1
+# 三色閱讀 API 設定 v0.2.2
 
 更新日期：2026-09-28
 
@@ -22,6 +22,7 @@ POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateCon
 - API Key：放在 `x-goog-api-key` header，不放 URL。
 - 輸入：文字、圖片；圖片使用 Gemini REST 的 `inline_data`。
 - JSON：`generationConfig.responseMimeType = application/json`。
+- Gemini 3.x 使用 API 預設的 sampling 設定；不額外傳送 `temperature`，避免 latest alias 切換後產生無效參數。
 
 ### DeepSeek
 
@@ -73,8 +74,7 @@ POST https://api.deepseek.com/chat/completions
     }
   ],
   "generationConfig": {
-    "responseMimeType": "application/json",
-    "temperature": 0.2
+    "responseMimeType": "application/json"
   }
 }
 ```
