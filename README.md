@@ -4,9 +4,9 @@
 
 ## 目前版本
 
-`v0.2.0`：在原本 4 個 Android 手機畫面上加入可操作的 Provider 設定與 API request mapping。
+`v0.2.1`：在原本 4 個 Android 手機畫面上加入可操作的 Provider 設定、API request mapping 與 Android 測試包建置。
 
-- Gemini：`gemini-3.1-flash-lite`
+- Gemini：`gemini-flash-latest`（自動跟隨目前 Gemini Flash 模型）
 - DeepSeek：`deepseek-flash`（DeepSeek-V4.1-Flash）
 - Gemini／DeepSeek Flash 都支援文字＋圖片
 - API Key 不寫入原始碼；Prototype 只存目前頁面記憶體
@@ -23,7 +23,8 @@ three-color-reading/
 │  ├─ api-client.test.js
 │  └─ prototype-structure.test.js
 ├─ package.json
-└─ .gitignore
+├─ .gitignore
+└─ android/                                # WebView Android 測試包
 ```
 
 ## 開啟 Prototype
@@ -60,6 +61,8 @@ npm run check
 4. 按「套用設定」或「測試連線」。
 5. 首頁貼入文章；需要圖片時按「加入圖片」。
 
+Gemini 的 `gemini-flash-latest` 是 alias，不綁定單一 3.1 版本；Google 更新 alias 後，下一次請求會跟隨目前的 Flash 模型。
+
 本 Prototype 不內建任何 API Key。請不要把自己的 Key 寫入 GitHub，也不要把 Key 貼在公開 issue、README 或截圖中。
 
 詳細 request 格式請看 [API_CONFIG.md](API_CONFIG.md)。
@@ -67,3 +70,7 @@ npm run check
 ## 後續 Android 實作
 
 下一階段可用 Kotlin + Jetpack Compose 實作同一個 `ReadingAnalysisProvider` 介面，並用 Android Keystore 儲存使用者 Key。UI 先沿用 Prototype 的 4 頁流程，再接 Room、JSON schema validation、閱讀紀錄與 APK build。
+
+## Android 測試 APK
+
+Android 測試包由 GitHub Actions 建置，輸出檔名為 `three-color-reading-v0.2.1-debug.apk`。下載後可在小米 MIX 2 開啟安裝；若 Android 顯示來源限制，請暫時允許瀏覽器或檔案管理器安裝未知來源應用程式。

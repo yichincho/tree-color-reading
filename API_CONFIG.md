@@ -1,4 +1,4 @@
-# 三色閱讀 API 設定 v0.2
+# 三色閱讀 API 設定 v0.2.1
 
 更新日期：2026-09-28
 
@@ -12,7 +12,7 @@
 
 ### Gemini
 
-- 預設模型：`gemini-3.1-flash-lite`
+- 預設模型：`gemini-flash-latest`（官方 latest alias，自動跟隨目前 Flash 模型）
 - 官方 REST API：
 
 ```text
@@ -147,7 +147,8 @@ ReadingAnalysisProvider
 ## 5. 官方依據
 
 - Gemini API：<https://ai.google.dev/api/generate-content>
-- Gemini 3.1 Flash-Lite：<https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite>
+- Gemini Models：<https://ai.google.dev/gemini-api/docs/models>
+- Gemini API Changelog（latest alias 變更）：<https://ai.google.dev/gemini-api/docs/changelog>
 - DeepSeek Models & Pricing：<https://api-docs.deepseek.com/quick_start/pricing/>
 - DeepSeek Models API：<https://api-docs.deepseek.com/api/list-models/>
 - DeepSeek Vision：<https://api-docs.deepseek.com/guides/vision/>

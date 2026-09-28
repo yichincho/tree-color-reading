@@ -15,7 +15,7 @@ test('uses current multimodal defaults for Gemini and DeepSeek Flash', () => {
   const gemini = getProviderConfig('gemini');
   const deepseek = getProviderConfig('deepseek');
 
-  assert.equal(gemini.model, 'gemini-3.1-flash-lite');
+  assert.equal(gemini.model, 'gemini-flash-latest');
   assert.equal(gemini.supportsImages, true);
   assert.equal(deepseek.model, 'deepseek-flash');
   assert.equal(deepseek.supportsImages, true);
@@ -32,6 +32,8 @@ test('builds Gemini generateContent request with inline image and header-only ke
 
   assert.equal(request.method, 'POST');
   assert.equal(request.url.includes('gemini-secret'), false);
+  assert.match(request.url, /models\/gemini-flash-latest:generateContent$/);
+  assert.equal(request.url.includes('gemini-3.1'), false);
   assert.equal(request.headers['x-goog-api-key'], 'gemini-secret');
 
   const body = JSON.parse(request.body);

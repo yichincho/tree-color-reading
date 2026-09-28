@@ -1,0 +1,46 @@
+name: Build Android debug APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Rename APK for manual testing
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk three-color-reading-v0.2.1-debug.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-color-reading-v0.2.1-debug-apk
+          path: three-color-reading-v0.2.1-debug.apk
+          if-no-files-found: error
+          retention-days: 30
