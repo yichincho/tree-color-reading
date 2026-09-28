@@ -4,9 +4,9 @@
 
 ## 目前版本
 
-`v0.2.1`：在原本 4 個 Android 手機畫面上加入可操作的 Provider 設定、API request mapping 與 Android 測試包建置。
+`v0.2.2`：修正 Gemini latest alias 的 Gemini 3.x request 設定，並加入與三色閱讀主題一致的 Android launcher icon。
 
-- Gemini：`gemini-flash-latest`（自動跟隨目前 Gemini Flash 模型）
+- Gemini：`gemini-flash-latest`（官方 alias，自動跟隨目前 Gemini Flash 模型）
 - DeepSeek：`deepseek-flash`（DeepSeek-V4.1-Flash）
 - Gemini／DeepSeek Flash 都支援文字＋圖片
 - API Key 不寫入原始碼；Prototype 只存目前頁面記憶體
@@ -73,4 +73,4 @@ Gemini 的 `gemini-flash-latest` 是 alias，不綁定單一 3.1 版本；Google
 
 ## Android 測試 APK
 
-Android 測試包由 GitHub Actions 建置，輸出檔名為 `three-color-reading-v0.2.1-debug.apk`。下載後可在小米 MIX 2 開啟安裝；若 Android 顯示來源限制，請暫時允許瀏覽器或檔案管理器安裝未知來源應用程式。
+Android 測試包由 GitHub Actions 建置，輸出檔名為 `three-color-reading-v0.2.2-debug.apk`。下載後可在小米 MIX 2 開啟安裝；若 Android 顯示來源限制，請暫時允許瀏覽器或檔案管理器安裝未知來源應用程式。

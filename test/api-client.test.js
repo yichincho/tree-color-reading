@@ -42,6 +42,7 @@ test('builds Gemini generateContent request with inline image and header-only ke
     inline_data: { mime_type: 'image/png', data: 'QUJDRA==' },
   });
   assert.equal(body.generationConfig.responseMimeType, 'application/json');
+  assert.equal(body.generationConfig.temperature, undefined);
 });
 
 test('builds DeepSeek Chat Completions request with mixed text and image content', () => {
