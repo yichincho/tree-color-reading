@@ -159,30 +159,42 @@ def parse_provider_error(status, payload, api_key):
     return f"AI API 請求失敗（HTTP {status}）。{suffix}"
 
 
-def call_provider(provider, api_key, model, text, image=None, opener=None):
-    """送出請求並回傳解析後的 JSON 物件。"""
-    request = build_provider_request(provider, api_key, model, text, image)
+SWITCH_MODEL_HINT = "可到「API 設定」按「讀取模型清單」改選其他模型。"
+
+
+def request_json(url, headers, api_key, body=None, opener=None):
+    """送出 HTTP 請求並回傳 JSON；錯誤轉成 ProviderError（不含 Key）。"""
     http_request = urllib.request.Request(
-        request["url"],
-        data=json.dumps(request["body"]).encode("utf-8"),
-        headers=request["headers"],
-        method="POST",
+        url,
+        data=json.dumps(body).encode("utf-8") if body is not None else None,
+        headers=headers,
+        method="POST" if body is not None else "GET",
     )
     open_url = opener or urllib.request.urlopen
     try:
         with open_url(http_request, timeout=REQUEST_TIMEOUT) as response:
-            payload = json.loads(response.read().decode("utf-8") or "{}")
+            return json.loads(response.read().decode("utf-8") or "{}")
     except urllib.error.HTTPError as error:
         try:
             payload = json.loads(error.read().decode("utf-8") or "{}")
         except (ValueError, UnicodeDecodeError):
             payload = {}
-        fatal = error.code in (401, 403, 429) or is_invalid_key_error(error.code, json.dumps(payload))
-        raise ProviderError(parse_provider_error(error.code, payload, api_key), fatal=fatal) from None
+        message = parse_provider_error(error.code, payload, api_key)
+        # 這些錯誤換下一段也會一樣失敗，所以停止整次分析
+        fatal = error.code in (401, 403, 404, 429, 503) or is_invalid_key_error(error.code, json.dumps(payload))
+        if error.code in (404, 503):
+            message = f"{message} {SWITCH_MODEL_HINT}"
+        raise ProviderError(message, fatal=fatal) from None
     except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError):
         raise ProviderError("無法連線到 AI API，請檢查網路或稍後重試。") from None
     except ValueError:
         raise ProviderError("AI API 回應無法解析。") from None
+
+
+def call_provider(provider, api_key, model, text, image=None, opener=None):
+    """送出分析請求並回傳解析後的 JSON 物件。"""
+    request = build_provider_request(provider, api_key, model, text, image)
+    payload = request_json(request["url"], request["headers"], api_key, request["body"], opener)
 
     raw_text = clean_json_text(extract_response_text(provider, payload))
     if not raw_text:
@@ -191,6 +203,49 @@ def call_provider(provider, api_key, model, text, image=None, opener=None):
         return json.loads(raw_text)
     except ValueError:
         raise ProviderError("AI 回應不是有效 JSON，請重試或切換 Provider。") from None
+
+
+# 會回傳語音、圖片或向量的模型不能做文字 JSON 分析，不列出
+NON_TEXT_MODEL = re.compile(r"tts|image|audio|embedding|live|veo|imagen", re.I)
+
+
+def list_models(provider, api_key, opener=None):
+    """列出這個 Key 可以用的模型：[{id, label, description}]。"""
+    if not api_key or not str(api_key).strip():
+        raise ProviderError("請先輸入 API Key。")
+    config = get_provider_config(provider)
+    api_key = str(api_key).strip()
+    models = []
+    if provider == "gemini":
+        page_token = ""
+        for _ in range(10):
+            query = urllib.parse.urlencode({"pageSize": 1000, **({"pageToken": page_token} if page_token else {})})
+            payload = request_json(f"{config['base_url']}/v1beta/models?{query}",
+                                   {"x-goog-api-key": api_key}, api_key, opener=opener)
+            for model in payload.get("models") or []:
+                if "generateContent" not in (model.get("supportedGenerationMethods") or []):
+                    continue
+                model_id = re.sub(r"^models/", "", str(model.get("name", "")))
+                if model_id and not NON_TEXT_MODEL.search(model_id):
+                    models.append({
+                        "id": model_id,
+                        "label": _text(model.get("displayName")) or model_id,
+                        "description": _text(model.get("description")),
+                    })
+            page_token = payload.get("nextPageToken") or ""
+            if not page_token:
+                break
+    else:
+        payload = request_json(f"{config['base_url']}/models",
+                               {"Authorization": f"Bearer {api_key}"}, api_key, opener=opener)
+        for model in payload.get("data") or []:
+            if model.get("id"):
+                models.append({"id": str(model["id"]), "label": str(model["id"]), "description": ""})
+    if not models:
+        raise ProviderError("這個 Key 沒有可用的模型。")
+    default = config["model"]
+    models.sort(key=lambda item: (item["id"] != default, "latest" not in item["id"], item["id"]))
+    return models
 
 
 # ---------------------------------------------------------------------------
@@ -371,7 +426,13 @@ def handle_test(data, caller=None):
     return {"ok": True, "label": PROVIDERS[provider]["label"]}
 
 
+def handle_models(data, caller=None):
+    provider, api_key, _ = _credentials(data)
+    return {"models": (caller or list_models)(provider, api_key)}
+
+
 ROUTES = {
+    "/api/models": handle_models,
     "/api/overview": handle_overview,
     "/api/paragraph": handle_paragraph,
     "/api/ocr": handle_ocr,

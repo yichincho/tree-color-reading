@@ -93,6 +93,55 @@ class ProviderRequestTest(unittest.TestCase):
         self.assertTrue(str(context.exception).startswith("API Key 無效"))
 
 
+class ListModelsTest(unittest.TestCase):
+    def test_gemini_lists_text_models_across_pages_default_first(self):
+        pages = [
+            {"models": [
+                {"name": "models/gemini-2.5-pro", "displayName": "Gemini 2.5 Pro",
+                 "supportedGenerationMethods": ["generateContent", "countTokens"]},
+                {"name": "models/text-embedding-004", "supportedGenerationMethods": ["embedContent"]},
+                {"name": "models/gemini-2.5-flash-preview-tts", "supportedGenerationMethods": ["generateContent"]},
+            ], "nextPageToken": "next"},
+            {"models": [
+                {"name": "models/gemini-flash-latest", "displayName": "Gemini Flash Latest",
+                 "supportedGenerationMethods": ["generateContent"]},
+                {"name": "models/gemini-flash-lite-latest", "supportedGenerationMethods": ["generateContent"]},
+            ]},
+        ]
+        captured = []
+
+        def opener(request, timeout):
+            captured.append(request)
+            return FakeResponse(json.dumps(pages[len(captured) - 1]).encode("utf-8"))
+
+        models = app.list_models("gemini", "k", opener=opener)
+        self.assertEqual([m["id"] for m in models],
+                         ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-pro"])
+        self.assertEqual(models[0]["label"], "Gemini Flash Latest")
+        self.assertEqual(captured[0].get_method(), "GET")
+        self.assertIn("pageToken=next", captured[1].full_url)
+        self.assertEqual(captured[0].get_header("X-goog-api-key"), "k")
+
+    def test_deepseek_lists_models(self):
+        captured = []
+        payload = {"object": "list", "data": [{"id": "deepseek-v4-pro"}, {"id": "deepseek-flash"}]}
+        models = app.list_models("deepseek", "k", opener=fake_opener(payload, captured))
+        self.assertEqual([m["id"] for m in models], ["deepseek-flash", "deepseek-v4-pro"])
+        self.assertEqual(captured[0].full_url, "https://api.deepseek.com/models")
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer k")
+
+    def test_missing_model_is_fatal_and_suggests_switching(self):
+        def opener(request, timeout):
+            payload = {"error": {"code": 404, "message": "models/gemini-x is not found"}}
+            raise urllib.error.HTTPError(request.full_url, 404, "Not Found", {},
+                                         io.BytesIO(json.dumps(payload).encode("utf-8")))
+
+        with self.assertRaises(app.ProviderError) as context:
+            app.call_provider("gemini", "k", "gemini-x", "hi", opener=opener)
+        self.assertTrue(context.exception.fatal)
+        self.assertIn("讀取模型清單", str(context.exception))
+
+
 class AnalysisHandlersTest(unittest.TestCase):
     def test_overview_sends_numbered_paragraphs_and_fills_missing_items(self):
         prompts = []

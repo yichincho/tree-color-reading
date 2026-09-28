@@ -38,10 +38,14 @@
           <button id="toggleKeyButton" class="ghost small" type="button">顯示</button>
         </span>
       </label>
-      <label class="field">
-        <span>模型 ID</span>
-        <input id="modelInput" type="text" spellcheck="false">
-      </label>
+      <div class="field">
+        <label for="modelSelect">模型</label>
+        <span class="key-row">
+          <select id="modelSelect"></select>
+          <button id="loadModelsButton" class="ghost small" type="button">讀取模型清單</button>
+        </span>
+        <input id="modelInput" type="text" spellcheck="false" aria-label="模型 ID" placeholder="或直接輸入模型 ID">
+      </div>
       <label class="check"><input id="rememberKey" type="checkbox"> 在這台電腦的瀏覽器記住 Key（不勾選則關掉網頁就清除）</label>
       <div class="actions">
         <button id="saveSettingsButton" class="primary" type="button">套用</button>
@@ -64,6 +68,7 @@
         <button id="ocrButton" type="button" disabled>從圖片擷取文字</button>
         <span id="imageName" class="muted">未選圖片</span>
         <span class="spacer"></span>
+        <label class="quick-model"><span>模型</span><select id="quickModelSelect" aria-label="分析用的模型"></select></label>
         <button id="clearButton" class="ghost" type="button">清除</button>
         <button id="cancelButton" type="button" disabled>取消</button>
         <button id="startButton" class="primary" type="button">開始分析</button>
