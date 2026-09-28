@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+local.properties
+*.jks
+*.keystore
+secrets.properties
+build/
+.gradle/
+captures/
+*.apk
+.DS_Store

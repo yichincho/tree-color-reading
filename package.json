@@ -1,0 +1,10 @@
+{
+  "name": "three-color-reading-prototype",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Three-color dehydration reading Android UI and API prototype",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check api-client.js"
+  }
+}
