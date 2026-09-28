@@ -150,6 +150,7 @@
       statusDot: $('statusDot'), statusLabel: $('statusLabel'),
       providerInputs: [...document.querySelectorAll('input[name="provider"]')],
       apiKeyInput: $('apiKeyInput'), toggleKeyButton: $('toggleKeyButton'), modelInput: $('modelInput'),
+      modelSelect: $('modelSelect'), quickModelSelect: $('quickModelSelect'), loadModelsButton: $('loadModelsButton'),
       rememberKey: $('rememberKey'), saveSettingsButton: $('saveSettingsButton'),
       testConnectionButton: $('testConnectionButton'), settingsMessage: $('settingsMessage'),
       articleInput: $('articleInput'), imageInput: $('imageInput'), imageName: $('imageName'),
@@ -169,6 +170,7 @@
     const state = {
       provider: storage.get('localStorage', 'tcr_provider') || 'gemini',
       models: {},
+      modelLists: {},
       keys: {},
       image: null,
       mode: 'dehydrate',
@@ -179,6 +181,12 @@
     for (const provider of Object.keys(DEFAULT_MODELS)) {
       state.models[provider] = storage.get('localStorage', `tcr_model_${provider}`) || DEFAULT_MODELS[provider];
       state.keys[provider] = storage.get('localStorage', `tcr_key_${provider}`) || storage.get('sessionStorage', `tcr_key_${provider}`);
+      try {
+        const list = JSON.parse(storage.get('localStorage', `tcr_models_${provider}`) || '[]');
+        state.modelLists[provider] = Array.isArray(list) ? list : [];
+      } catch {
+        state.modelLists[provider] = [];
+      }
     }
     if (!DEFAULT_MODELS[state.provider]) state.provider = 'gemini';
 
@@ -219,6 +227,7 @@
       els.providerInputs.forEach((input) => { input.checked = input.value === state.provider; });
       els.apiKeyInput.value = state.keys[state.provider] || '';
       els.modelInput.value = state.models[state.provider];
+      renderModelOptions();
       els.rememberKey.checked = Boolean(storage.get('localStorage', `tcr_key_${state.provider}`));
       renderStatus();
     }
@@ -231,6 +240,45 @@
         : '尚未設定 API Key';
     }
 
+    function renderModelOptions() {
+      const current = state.models[state.provider];
+      const list = state.modelLists[state.provider] || [];
+      const models = list.some((model) => model.id === current) ? list : [{ id: current, label: current }, ...list];
+      els.modelSelect.innerHTML = models.map((model) => (
+        `<option value="${escapeHtml(model.id)}">${escapeHtml(model.label && model.label !== model.id ? `${model.label} · ${model.id}` : model.id)}</option>`
+      )).join('') + (list.length ? '' : '<option value="" disabled>按「讀取模型清單」列出可用模型</option>');
+      els.quickModelSelect.innerHTML = models.map((model) => (
+        `<option value="${escapeHtml(model.id)}">${escapeHtml(model.id)}</option>`
+      )).join('');
+      els.modelSelect.value = current;
+      els.quickModelSelect.value = current;
+    }
+
+    function setModel(model) {
+      state.models[state.provider] = model || DEFAULT_MODELS[state.provider];
+      storage.set('localStorage', `tcr_model_${state.provider}`, state.models[state.provider]);
+      els.modelInput.value = state.models[state.provider];
+      renderModelOptions();
+      renderStatus();
+    }
+
+    async function loadModels() {
+      if (!applySettings()) return setMessage(els.settingsMessage, '請先輸入 API Key，才能讀取模型清單。', 'error');
+      els.loadModelsButton.disabled = true;
+      setMessage(els.settingsMessage, '讀取模型清單中…');
+      try {
+        const { models } = await post('/api/models', credentials());
+        state.modelLists[state.provider] = models;
+        storage.set('localStorage', `tcr_models_${state.provider}`, JSON.stringify(models));
+        renderModelOptions();
+        setMessage(els.settingsMessage, `已列出 ${models.length} 個可用模型，選好後就會套用。`, 'success');
+      } catch (error) {
+        setMessage(els.settingsMessage, error.message, 'error');
+      } finally {
+        els.loadModelsButton.disabled = false;
+      }
+    }
+
     function applySettings() {
       const key = els.apiKeyInput.value.trim();
       state.keys[state.provider] = key;
@@ -240,6 +288,7 @@
       storage.set('localStorage', `tcr_model_${state.provider}`, state.models[state.provider]);
       storage.set('localStorage', `tcr_key_${state.provider}`, remember ? key : '');
       storage.set('sessionStorage', `tcr_key_${state.provider}`, remember ? '' : key);
+      renderModelOptions();
       renderStatus();
       return key;
     }
@@ -262,6 +311,16 @@
       renderSettings();
       setMessage(els.settingsMessage, '');
     }));
+    els.modelSelect.addEventListener('change', () => {
+      setModel(els.modelSelect.value);
+      setMessage(els.settingsMessage, `已改用 ${state.models[state.provider]}。`, 'success');
+    });
+    els.quickModelSelect.addEventListener('change', () => {
+      setModel(els.quickModelSelect.value);
+      setMessage(els.inputMessage, `已改用 ${state.models[state.provider]}；失敗的段落可按「重試這一段」。`, 'success');
+    });
+    els.modelInput.addEventListener('change', () => setModel(els.modelInput.value.trim()));
+    els.loadModelsButton.addEventListener('click', loadModels);
     els.toggleKeyButton.addEventListener('click', () => {
       const hidden = els.apiKeyInput.type === 'password';
       els.apiKeyInput.type = hidden ? 'text' : 'password';
@@ -270,7 +329,8 @@
     els.saveSettingsButton.addEventListener('click', () => {
       const key = applySettings();
       setMessage(els.settingsMessage, key ? `已套用 ${PROVIDER_LABELS[state.provider]} 設定。` : '已套用模型設定；尚未輸入 API Key。', key ? 'success' : '');
-      if (key) els.settingsPanel.hidden = true;
+      if (key && !state.modelLists[state.provider].length) loadModels();
+      else if (key) els.settingsPanel.hidden = true;
     });
     els.testConnectionButton.addEventListener('click', async () => {
       if (!applySettings()) return setMessage(els.settingsMessage, '請先輸入 API Key。', 'error');

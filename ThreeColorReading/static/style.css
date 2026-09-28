@@ -103,8 +103,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .provider span{display:flex;flex-direction:column}
 .provider small{color:var(--muted)}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:.9rem}
-.field input{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:8px 10px;width:100%}
+.field input,.field select,.quick-model select{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:8px 10px;width:100%;min-width:0}
+.field select{flex:1}
+.quick-model{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.quick-model select{width:auto;max-width:220px;padding:6px 8px;color:var(--text)}
 .key-row{display:flex;gap:8px}
+.key-row button{flex:none;white-space:nowrap}
 .check{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
 .message{margin:10px 0 0;font-size:.9rem;min-height:1em}
 .message:empty{display:none}
